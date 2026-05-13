@@ -3,10 +3,26 @@ import { Quiz, Flashcard, StudyNote } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+async function withRetry<T>(fn: () => Promise<T>, retries = 3, delay = 2000): Promise<T> {
+  try {
+    return await fn();
+  } catch (error: any) {
+    if (retries > 0 && (error.status === 429 || error.message?.includes('429'))) {
+      console.warn(`Rate limited. Retrying in ${delay}ms... (${retries} attempts left)`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return withRetry(fn, retries - 1, delay * 2);
+    }
+    if (error.status === 429 || error.message?.includes('429')) {
+      throw new Error("API Quota Exceeded (429). Please check your API key in Settings > Secrets or try again later. If you are on the free tier, you may have reached your per-minute limit.");
+    }
+    throw error;
+  }
+}
+
 export async function generateQuizFromDocument(base64Data: string, mimeType: string): Promise<Quiz> {
-  const model = "gemini-2.0-flash";
+  const model = "gemini-3.1-flash-lite";
   
-  const response = await ai.models.generateContent({
+  const response = await withRetry(() => ai.models.generateContent({
     model,
     contents: [
       {
@@ -50,7 +66,7 @@ export async function generateQuizFromDocument(base64Data: string, mimeType: str
         required: ["title", "questions"],
       },
     },
-  });
+  }));
 
   try {
     const quiz = JSON.parse(response.text || "{}") as Quiz;
@@ -62,9 +78,9 @@ export async function generateQuizFromDocument(base64Data: string, mimeType: str
 }
 
 export async function generateFlashcardsFromDocument(base64Data: string, mimeType: string): Promise<Flashcard[]> {
-  const model = "gemini-2.0-flash";
+  const model = "gemini-3.1-flash-lite";
   
-  const response = await ai.models.generateContent({
+  const response = await withRetry(() => ai.models.generateContent({
     model,
     contents: [
       {
@@ -97,7 +113,7 @@ export async function generateFlashcardsFromDocument(base64Data: string, mimeTyp
         },
       },
     },
-  });
+  }));
 
   try {
     const result = JSON.parse(response.text || "[]") as Flashcard[];
@@ -109,9 +125,9 @@ export async function generateFlashcardsFromDocument(base64Data: string, mimeTyp
 }
 
 export async function generateNotesFromDocument(base64Data: string, mimeType: string): Promise<StudyNote> {
-  const model = "gemini-2.0-flash";
+  const model = "gemini-3.1-flash-lite";
   
-  const response = await ai.models.generateContent({
+  const response = await withRetry(() => ai.models.generateContent({
     model,
     contents: [
       {
@@ -158,7 +174,7 @@ export async function generateNotesFromDocument(base64Data: string, mimeType: st
         required: ["title", "sections", "summary", "keywords"],
       },
     },
-  });
+  }));
 
   try {
     const result = JSON.parse(response.text || "{}") as StudyNote;

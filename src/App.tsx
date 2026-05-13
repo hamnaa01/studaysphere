@@ -143,6 +143,20 @@ export default function App() {
               exit={{ opacity: 0, scale: 0.95 }}
             >
               <Dashboard onStartGenerator={() => setStage('upload')} onModuleSelect={handleModuleSelect} />
+              {error && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-12 p-6 bg-rose-500 text-white rounded-3xl text-center max-w-md mx-auto font-black uppercase tracking-widest shadow-2xl shadow-rose-500/20 text-xs border border-rose-400"
+                >
+                  <div className="flex items-center justify-center gap-4">
+                    {error}
+                    <button onClick={() => setError(null)} className="p-1 hover:bg-white/20 rounded-lg">
+                      <X size={16} />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
             </motion.section>
           )}
 
