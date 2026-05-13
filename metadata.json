@@ -1,0 +1,6 @@
+{
+  "name": "QuizGenie AI",
+  "description": "Transform your study materials into interactive quizzes using AI. Upload PDFs or text documents to generate practice tests instantly.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["AI Quiz Generation", "Document Analysis", "Progress Tracking"]
+}
